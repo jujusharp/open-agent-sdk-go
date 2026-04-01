@@ -63,6 +63,17 @@ func (m *Mailbox) AllNames() []string {
 	return names
 }
 
+// Broadcast delivers msg to all registered agents atomically.
+func (m *Mailbox) Broadcast(msg AgentMessage) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for name := range m.boxes {
+		cp := msg
+		cp.To = name
+		m.boxes[name] = append(m.boxes[name], cp)
+	}
+}
+
 // SendMessageTool sends messages to other agents.
 type SendMessageTool struct {
 	Mailbox *Mailbox
@@ -112,11 +123,7 @@ func (t *SendMessageTool) Call(ctx context.Context, input map[string]interface{}
 	}
 
 	if to == "*" {
-		for _, name := range t.Mailbox.AllNames() {
-			m := msg
-			m.To = name
-			t.Mailbox.Send(m)
-		}
+		t.Mailbox.Broadcast(msg)
 		return textResult("Message broadcast to all agents"), nil
 	}
 
