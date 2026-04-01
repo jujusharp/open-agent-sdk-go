@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/codeany-ai/open-agent-sdk-go/types"
@@ -23,7 +22,7 @@ type Team struct {
 type TeamStore struct {
 	mu      sync.Mutex
 	teams   map[string]*Team
-	counter atomic.Int64
+	counter int64
 }
 
 // NewTeamStore creates a new TeamStore.
@@ -32,7 +31,8 @@ func NewTeamStore() *TeamStore { return &TeamStore{teams: make(map[string]*Team)
 func (s *TeamStore) Create(name string, members []string) *Team {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	id := fmt.Sprintf("team_%d", s.counter.Add(1))
+	s.counter++
+	id := fmt.Sprintf("team_%d", s.counter)
 	team := &Team{
 		ID:        id,
 		Name:      name,

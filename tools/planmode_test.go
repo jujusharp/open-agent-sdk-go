@@ -18,7 +18,7 @@ func TestPlanModeTools(t *testing.T) {
 	if err != nil || r.IsError {
 		t.Fatalf("enter failed: %v", err)
 	}
-	if !state.Active {
+	if !state.IsActive() {
 		t.Error("expected plan mode active after enter")
 	}
 
@@ -36,11 +36,11 @@ func TestPlanModeTools(t *testing.T) {
 	if err != nil || r.IsError {
 		t.Fatalf("exit failed: %v", err)
 	}
-	if state.Active {
+	if state.IsActive() {
 		t.Error("expected plan mode inactive after exit")
 	}
-	if !strings.Contains(state.Plan, "step 1") {
-		t.Errorf("plan not saved: %q", state.Plan)
+	if !strings.Contains(state.GetPlan(), "step 1") {
+		t.Errorf("plan not saved: %q", state.GetPlan())
 	}
 
 	// exit when not active

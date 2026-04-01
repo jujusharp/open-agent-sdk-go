@@ -10,12 +10,26 @@ import (
 // PlanModeState tracks whether plan mode is active.
 type PlanModeState struct {
 	mu     sync.Mutex
-	Active bool
-	Plan   string
+	active bool
+	plan   string
 }
 
 // NewPlanModeState creates a new PlanModeState.
 func NewPlanModeState() *PlanModeState { return &PlanModeState{} }
+
+// IsActive reports whether plan mode is currently active.
+func (s *PlanModeState) IsActive() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.active
+}
+
+// GetPlan returns the last saved plan.
+func (s *PlanModeState) GetPlan() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.plan
+}
 
 // EnterPlanModeTool activates plan mode.
 type EnterPlanModeTool struct{ State *PlanModeState }
@@ -37,11 +51,11 @@ func (t *EnterPlanModeTool) IsReadOnly(input map[string]interface{}) bool       
 func (t *EnterPlanModeTool) Call(ctx context.Context, input map[string]interface{}, tCtx *types.ToolUseContext) (*types.ToolResult, error) {
 	t.State.mu.Lock()
 	defer t.State.mu.Unlock()
-	if t.State.Active {
+	if t.State.active {
 		return textResult("Already in plan mode."), nil
 	}
-	t.State.Active = true
-	t.State.Plan = ""
+	t.State.active = true
+	t.State.plan = ""
 	return textResult("Entered plan mode. Design your approach before executing. Use ExitPlanMode when the plan is ready."), nil
 }
 
@@ -71,12 +85,12 @@ func (t *ExitPlanModeTool) IsReadOnly(input map[string]interface{}) bool        
 func (t *ExitPlanModeTool) Call(ctx context.Context, input map[string]interface{}, tCtx *types.ToolUseContext) (*types.ToolResult, error) {
 	t.State.mu.Lock()
 	defer t.State.mu.Unlock()
-	if !t.State.Active {
+	if !t.State.active {
 		return errorResult("Not in plan mode."), nil
 	}
-	t.State.Active = false
+	t.State.active = false
 	plan, _ := input["plan"].(string)
-	t.State.Plan = plan
+	t.State.plan = plan
 	approved := true
 	if v, ok := input["approved"].(bool); ok {
 		approved = v
