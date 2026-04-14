@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"github.com/codeany-ai/open-agent-sdk-go/skills"
@@ -18,25 +19,7 @@ func NewSkillTool() *SkillTool { return &SkillTool{} }
 func (t *SkillTool) Name() string { return "Skill" }
 
 func (t *SkillTool) Description() string {
-	var sb strings.Builder
-	sb.WriteString("Execute a skill within the current conversation. Skills provide specialized capabilities and domain knowledge.\n\n")
-
-	available := skills.GetUserInvocableSkills()
-	if len(available) == 0 {
-		sb.WriteString("No skills are currently registered.")
-		return sb.String()
-	}
-
-	sb.WriteString("Available skills:\n")
-	for _, skill := range available {
-		desc := skill.Description
-		if len(desc) > 200 {
-			desc = desc[:200] + "..."
-		}
-		sb.WriteString("- " + skill.Name + ": " + desc + "\n")
-	}
-	sb.WriteString("\nWhen a skill matches the user's request, invoke it using this tool.")
-	return strings.TrimSpace(sb.String())
+	return "Execute a skill within the current conversation. Use the skill name and optional arguments when a specialized workflow matches the user's request."
 }
 
 func (t *SkillTool) InputSchema() types.ToolInputSchema {
@@ -68,11 +51,7 @@ func (t *SkillTool) Call(ctx context.Context, input map[string]interface{}, tCtx
 
 	skill := skills.GetSkill(skillName)
 	if skill == nil {
-		available := skills.GetUserInvocableSkills()
-		names := make([]string, 0, len(available))
-		for _, def := range available {
-			names = append(names, def.Name)
-		}
+		names := limitedSkillNames(12)
 		msg := `Unknown skill "` + skillName + `". Available skills: `
 		if len(names) == 0 {
 			msg += "none"
@@ -127,4 +106,17 @@ func (t *SkillTool) Call(ctx context.Context, input map[string]interface{}, tCtx
 			Text: string(data),
 		}},
 	}, nil
+}
+
+func limitedSkillNames(limit int) []string {
+	available := skills.GetUserInvocableSkills()
+	names := make([]string, 0, len(available))
+	for _, def := range available {
+		names = append(names, def.Name)
+	}
+	sort.Strings(names)
+	if limit > 0 && len(names) > limit {
+		return names[:limit]
+	}
+	return names
 }

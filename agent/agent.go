@@ -137,6 +137,9 @@ type Options struct {
 
 	// Subagent definitions
 	Agents map[string]AgentDefinition
+
+	// Skill directories to load file-based skills from.
+	SkillDirs []string
 }
 
 // AgentDefinition defines a subagent configuration.
@@ -174,6 +177,13 @@ type Agent struct {
 func New(opts Options) *Agent {
 	resolveEnvOptions(&opts)
 	skills.InitBundledSkills()
+	skillDirs := opts.SkillDirs
+	if len(skillDirs) == 0 {
+		skillDirs = skills.DefaultSkillDirs(opts.CWD)
+	}
+	if _, err := skills.LoadFromDirs(skillDirs); err != nil {
+		fmt.Fprintf(os.Stderr, "[skills] Failed to load skills: %v\n", err)
+	}
 
 	sessionID := uuid.New().String()
 

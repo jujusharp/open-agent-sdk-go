@@ -27,6 +27,7 @@ type Definition struct {
 	Hooks         hooks.HookConfig
 	Context       ContextType
 	Agent         string
+	SourcePath    string
 	GetPrompt     func(args string, ctx *types.ToolUseContext) ([]types.ContentBlock, error)
 }
 

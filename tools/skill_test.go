@@ -106,7 +106,10 @@ func TestSkillToolDescriptionListsAvailableSkills(t *testing.T) {
 	})
 
 	desc := NewSkillTool().Description()
-	if !strings.Contains(desc, "debug") {
-		t.Fatalf("description %q does not mention registered skill", desc)
+	if strings.Contains(desc, "debug") {
+		t.Fatalf("description should stay compact and avoid enumerating skills, got %q", desc)
+	}
+	if len(desc) > 220 {
+		t.Fatalf("description too large: %d chars", len(desc))
 	}
 }

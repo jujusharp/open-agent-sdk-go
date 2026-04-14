@@ -182,6 +182,83 @@ The built-in bundled skills are:
 - `commit`
 - `simplify`
 
+You can also load file-based skills from `SKILL.md` directories:
+
+```go
+a := agent.New(agent.Options{
+    SkillDirs: []string{
+        "~/.agents/skills",
+        "/path/to/project/.claude/skills",
+    },
+})
+```
+
+Each configured skill root is scanned using this layout:
+
+```text
+<skill-root>/
+  my-skill/
+    SKILL.md
+  release-notes/
+    SKILL.md
+```
+
+At startup the agent only indexes skill metadata from each `SKILL.md` frontmatter and registers the skill name, description, aliases, runtime hints, and source path. The markdown body is loaded lazily only when the `Skill` tool actually invokes that skill, so the default prompt and tool description stay compact even if you have a large shared skills directory.
+
+A file-based `SKILL.md` can define these fields in frontmatter:
+
+- `name` (defaults to the folder name)
+- `description` (defaults to the first non-empty line of the markdown body)
+- `aliases`
+- `when_to_use`
+- `argument_hint`
+- `allowed_tools`
+- `model`
+- `user_invocable`
+- `context` (`inline` or `fork`)
+- `agent`
+
+The loader also accepts the same keys in kebab-case or camelCase, for example `allowed-tools` and `allowedTools`.
+
+Example:
+
+```md
+---
+name: review-pr
+description: Review the current changes for bugs, regressions, and missing tests.
+aliases: [cr]
+when_to_use: Use when the user asks for a review of the current diff or branch.
+argument_hint: Optional focus areas, file paths, or risk areas to prioritize.
+allowed_tools: [Read, Grep, Glob, Bash]
+user_invocable: true
+context: inline
+model: sonnet-4-6
+---
+
+Review the current workspace changes with a code review mindset.
+
+Focus on:
+- correctness bugs
+- behavioral regressions
+- missing tests
+
+Return findings ordered by severity with concrete file references.
+```
+
+When a file-based skill is executed, the markdown body becomes the injected skill prompt. If the caller supplies `args`, they are appended under a `## Arguments` section so the skill body can stay reusable.
+
+The built-in `Skill` tool is the entry point for both bundled skills and file-based skills. Inline skills execute inside the current query and can override runtime settings such as allowed tools and model selection for subsequent turns in that same query. Forked skills execute through the subagent path and return the subagent result to the parent agent.
+
+If `SkillDirs` is omitted, the agent will automatically look in these standard locations:
+
+- `<cwd>/.agents/skills`
+- `<cwd>/.claude/skills`
+- `<cwd>/.codex/skills`
+- `~/.agents/skills`
+- `~/.claude/skills`
+- `~/.codex/skills`
+- `$CODEX_HOME/skills` if `CODEX_HOME` is set
+
 ## Session Management
 
 ```go
