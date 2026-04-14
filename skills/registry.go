@@ -60,7 +60,7 @@ func GetUserInvocableSkills() []Definition {
 	all := GetAllSkills()
 	result := make([]Definition, 0, len(all))
 	for _, def := range all {
-		if !def.UserInvocable {
+		if def.UserInvocable != nil && !*def.UserInvocable {
 			continue
 		}
 		if def.IsEnabled != nil && !def.IsEnabled() {

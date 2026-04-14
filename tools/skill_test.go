@@ -13,10 +13,11 @@ import (
 func TestSkillToolCall(t *testing.T) {
 	skills.ClearSkills()
 	skills.RegisterSkill(skills.Definition{
-		Name:         "review",
-		Description:  "Review current changes.",
-		AllowedTools: []string{"Read", "Glob"},
-		Model:        "sonnet-4-6",
+		Name:          "review",
+		Description:   "Review current changes.",
+		AllowedTools:  []string{"Read", "Glob"},
+		Model:         "sonnet-4-6",
+		UserInvocable: skills.Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			return []types.ContentBlock{
 				{Type: types.ContentBlockText, Text: "Review the current diff."},
@@ -98,7 +99,7 @@ func TestSkillToolDescriptionListsAvailableSkills(t *testing.T) {
 	skills.RegisterSkill(skills.Definition{
 		Name:          "debug",
 		Description:   "Investigate a failure with a structured debugging flow.",
-		UserInvocable: true,
+		UserInvocable: skills.Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			return []types.ContentBlock{{Type: types.ContentBlockText, Text: args}}, nil
 		},

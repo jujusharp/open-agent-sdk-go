@@ -21,6 +21,11 @@ type ToolCallResponse struct {
 	Error     error
 }
 
+type indexedToolCall struct {
+	index int
+	call  ToolCallRequest
+}
+
 // Executor runs tool calls with concurrency management.
 type Executor struct {
 	registry   *Registry
@@ -45,48 +50,50 @@ func (e *Executor) RunTools(ctx context.Context, calls []ToolCallRequest) []Tool
 	}
 
 	// Partition into concurrent-safe and sequential groups
-	var concurrent []ToolCallRequest
-	var sequential []ToolCallRequest
+	var concurrent []indexedToolCall
+	var sequential []indexedToolCall
 
-	for _, call := range calls {
+	for i, call := range calls {
 		tool := e.registry.Get(call.ToolName)
 		if tool == nil {
-			sequential = append(sequential, call)
+			sequential = append(sequential, indexedToolCall{index: i, call: call})
 			continue
 		}
 		if tool.IsConcurrencySafe(call.Input) {
-			concurrent = append(concurrent, call)
+			concurrent = append(concurrent, indexedToolCall{index: i, call: call})
 		} else {
-			sequential = append(sequential, call)
+			sequential = append(sequential, indexedToolCall{index: i, call: call})
 		}
 	}
 
-	var results []ToolCallResponse
+	results := make([]ToolCallResponse, len(calls))
 
 	// Run concurrent tools in parallel
 	if len(concurrent) > 0 {
-		results = append(results, e.runConcurrent(ctx, concurrent)...)
+		for idx, result := range e.runConcurrent(ctx, concurrent) {
+			results[concurrent[idx].index] = result
+		}
 	}
 
 	// Run sequential tools one at a time
-	for _, call := range sequential {
-		result := e.runSingle(ctx, call)
-		results = append(results, result)
+	for _, item := range sequential {
+		result := e.runSingle(ctx, item.call)
+		results[item.index] = result
 	}
 
 	return results
 }
 
-func (e *Executor) runConcurrent(ctx context.Context, calls []ToolCallRequest) []ToolCallResponse {
+func (e *Executor) runConcurrent(ctx context.Context, calls []indexedToolCall) []ToolCallResponse {
 	results := make([]ToolCallResponse, len(calls))
 	var wg sync.WaitGroup
 
-	for i, call := range calls {
+	for i, item := range calls {
 		wg.Add(1)
 		go func(idx int, c ToolCallRequest) {
 			defer wg.Done()
 			results[idx] = e.runSingle(ctx, c)
-		}(i, call)
+		}(i, item.call)
 	}
 
 	wg.Wait()

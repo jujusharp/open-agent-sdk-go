@@ -20,6 +20,7 @@ type SubagentConfig struct {
 	Prompt       string
 	Tools        []string
 	Model        string
+	MaxTurns     int
 	SystemPrompt string
 	CWD          string
 }
@@ -32,8 +33,8 @@ type AgentTool struct {
 	// Definitions maps agent names to their configurations.
 	Definitions map[string]SubagentDefinition
 
-	mu       sync.Mutex
-	running  map[string]context.CancelFunc
+	mu      sync.Mutex
+	running map[string]context.CancelFunc
 }
 
 // SubagentDefinition defines a preconfigured subagent.

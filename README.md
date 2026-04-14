@@ -148,6 +148,8 @@ a := agent.New(agent.Options{
 
 Bundled skills are initialized automatically when you create an agent. The default tool registry now includes a `Skill` tool, so the model can invoke registered skills during the conversation.
 
+Within the current query, inline skills can now inject their prompt into subsequent turns and enforce runtime overrides such as allowed tools and model selection. Forked skills execute through the subagent path and return the subagent result to the parent agent.
+
 ```go
 import (
     "github.com/codeany-ai/open-agent-sdk-go/skills"
@@ -157,7 +159,7 @@ import (
 skills.RegisterSkill(skills.Definition{
     Name:          "release-notes",
     Description:   "Draft release notes from the current git diff.",
-    UserInvocable: true,
+    UserInvocable: skills.Bool(true),
     AllowedTools:  []string{"Bash", "Read", "Glob", "Grep"},
     GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
         prompt := "Write release notes based on the current code changes."

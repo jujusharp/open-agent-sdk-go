@@ -16,25 +16,7 @@ import (
 
 const defaultSystemPrompt = `You are an AI assistant with access to tools. Use the tools available to you to help the user with their request. Be concise and direct in your responses.`
 
-// runLoop is the main agentic loop.
-func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types.SDKMessage) error {
-	startTime := time.Now()
-
-	// Build system prompt
-	systemPrompt := a.opts.SystemPrompt
-	if systemPrompt == "" {
-		systemPrompt = defaultSystemPrompt
-	}
-	if a.opts.AppendSystemPrompt != "" {
-		systemPrompt += "\n\n" + a.opts.AppendSystemPrompt
-	}
-
-	// Get context
-	sysCtx := agentcontext.GetSystemContext(a.opts.CWD)
-	userCtx := agentcontext.GetUserContext(a.opts.CWD)
-	systemBlocks := agentcontext.BuildSystemPromptBlocks(systemPrompt, sysCtx, userCtx)
-
-	// Convert system blocks to API format
+func toAPISystemBlocks(systemBlocks []map[string]interface{}) []api.SystemBlock {
 	apiSystemBlocks := make([]api.SystemBlock, len(systemBlocks))
 	for i, b := range systemBlocks {
 		block := api.SystemBlock{
@@ -48,6 +30,25 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 		}
 		apiSystemBlocks[i] = block
 	}
+	return apiSystemBlocks
+}
+
+// runLoop is the main agentic loop.
+func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types.SDKMessage) error {
+	startTime := time.Now()
+
+	// Build system prompt
+	baseSystemPrompt := a.opts.SystemPrompt
+	if baseSystemPrompt == "" {
+		baseSystemPrompt = defaultSystemPrompt
+	}
+	if a.opts.AppendSystemPrompt != "" {
+		baseSystemPrompt += "\n\n" + a.opts.AppendSystemPrompt
+	}
+
+	// Get context
+	sysCtx := agentcontext.GetSystemContext(a.opts.CWD)
+	userCtx := agentcontext.GetUserContext(a.opts.CWD)
 
 	// Add user message
 	userMsg := types.Message{
@@ -63,19 +64,19 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 	a.messages = append(a.messages, userMsg)
 
 	// Build tool params - filter by allowedTools and disallowedTools
-	allTools := a.toolRegistry.All()
+	baseTools := a.toolRegistry.All()
 	if len(a.opts.AllowedTools) > 0 {
 		allowedSet := make(map[string]bool, len(a.opts.AllowedTools))
 		for _, name := range a.opts.AllowedTools {
 			allowedSet[name] = true
 		}
 		var filtered []types.Tool
-		for _, t := range allTools {
+		for _, t := range baseTools {
 			if allowedSet[t.Name()] {
 				filtered = append(filtered, t)
 			}
 		}
-		allTools = filtered
+		baseTools = filtered
 	}
 	if len(a.opts.DisallowedTools) > 0 {
 		disallowedSet := make(map[string]bool, len(a.opts.DisallowedTools))
@@ -83,16 +84,12 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			disallowedSet[name] = true
 		}
 		var filtered []types.Tool
-		for _, t := range allTools {
+		for _, t := range baseTools {
 			if !disallowedSet[t.Name()] {
 				filtered = append(filtered, t)
 			}
 		}
-		allTools = filtered
-	}
-	apiTools := make([]api.APIToolParam, len(allTools))
-	for i, t := range allTools {
-		apiTools[i] = api.ToolToAPIParam(t)
+		baseTools = filtered
 	}
 
 	// Create tool context
@@ -107,6 +104,7 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 
 	var totalUsage types.Usage
 	turn := 0
+	var activeSkill *skillRuntimeState
 
 	// Main loop
 	for turn < a.opts.MaxTurns {
@@ -121,6 +119,16 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			break
 		}
 
+		systemPrompt := buildSystemPromptText(baseSystemPrompt, activeSkill)
+		systemBlocks := agentcontext.BuildSystemPromptBlocks(systemPrompt, sysCtx, userCtx)
+		apiSystemBlocks := toAPISystemBlocks(systemBlocks)
+
+		availableTools := filterToolsForSkill(baseTools, activeSkill)
+		apiTools := make([]api.APIToolParam, len(availableTools))
+		for i, t := range availableTools {
+			apiTools[i] = api.ToolToAPIParam(t)
+		}
+
 		// Build API messages from conversation history
 		apiMessages := a.buildAPIMessages()
 
@@ -129,6 +137,13 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			System:   apiSystemBlocks,
 			Messages: apiMessages,
 			Tools:    apiTools,
+		}
+		if activeSkill != nil && activeSkill.Model != "" {
+			req.Model = activeSkill.Model
+			req.MaxTokens = api.GetModelConfig(activeSkill.Model).MaxOutputTokens
+		} else if a.opts.Model != "" {
+			req.Model = a.opts.Model
+			req.MaxTokens = api.GetModelConfig(a.opts.Model).MaxOutputTokens
 		}
 
 		// Extended thinking - explicit config takes precedence, then effort-based auto-config
@@ -209,8 +224,10 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 		}
 
 		// If stream failed and fallback model is configured, retry with fallback
-		if streamError != nil && a.opts.FallbackModel != "" && a.apiClient.Model() != a.opts.FallbackModel {
-			a.apiClient.SetModel(a.opts.FallbackModel)
+		if streamError != nil && a.opts.FallbackModel != "" && req.Model != a.opts.FallbackModel {
+			fallbackReq := req
+			fallbackReq.Model = a.opts.FallbackModel
+			fallbackReq.MaxTokens = api.GetModelConfig(a.opts.FallbackModel).MaxOutputTokens
 
 			// Reset assistant message for retry
 			assistantMsg = &types.Message{
@@ -221,7 +238,7 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			}
 			toolUseBlocks = nil
 
-			streamEvents, streamErr = a.apiClient.CreateMessageStream(ctx, req)
+			streamEvents, streamErr = a.apiClient.CreateMessageStream(ctx, fallbackReq)
 			streamError = nil
 
 		fallbackStreamLoop:
@@ -253,7 +270,14 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			totalUsage.OutputTokens += assistantMsg.Usage.OutputTokens
 			totalUsage.CacheReadInputTokens += assistantMsg.Usage.CacheReadInputTokens
 			totalUsage.CacheCreationInputTokens += assistantMsg.Usage.CacheCreationInputTokens
-			a.costTracker.AddUsage(a.opts.Model, assistantMsg.Usage)
+			usageModel := assistantMsg.Model
+			if usageModel == "" {
+				usageModel = req.Model
+			}
+			if usageModel == "" {
+				usageModel = a.opts.Model
+			}
+			a.costTracker.AddUsage(usageModel, assistantMsg.Usage)
 		}
 
 		// Store assistant message
@@ -286,7 +310,11 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 			}
 		}
 
-		results := executor.RunTools(ctx, toolCalls)
+		results, nextSkill, err := a.executeToolCallsWithSkillRuntime(ctx, executor, toolCalls, activeSkill, toolCtx)
+		if err != nil {
+			return err
+		}
+		activeSkill = nextSkill
 
 		// Build tool result message
 		var toolResultContent []types.ContentBlock
@@ -330,8 +358,8 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 				}
 			}
 			eventCh <- types.SDKMessage{
-				Type: "tool_result",
-				Text: textContent,
+				Type:  "tool_result",
+				Text:  textContent,
 				Usage: &types.Usage{},
 				Message: &types.Message{
 					Type: "tool_result",

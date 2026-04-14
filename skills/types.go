@@ -22,7 +22,7 @@ type Definition struct {
 	ArgumentHint  string
 	AllowedTools  []string
 	Model         string
-	UserInvocable bool
+	UserInvocable *bool
 	IsEnabled     func() bool
 	Hooks         hooks.HookConfig
 	Context       ContextType
@@ -38,6 +38,12 @@ type Result struct {
 	Prompt       string   `json:"prompt,omitempty"`
 	AllowedTools []string `json:"allowedTools,omitempty"`
 	Model        string   `json:"model,omitempty"`
+	Agent        string   `json:"agent,omitempty"`
 	Result       string   `json:"result,omitempty"`
 	Error        string   `json:"error,omitempty"`
+}
+
+// Bool returns a pointer to the provided boolean.
+func Bool(v bool) *bool {
+	return &v
 }

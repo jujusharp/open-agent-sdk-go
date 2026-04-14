@@ -109,7 +109,7 @@ func InitBundledSkills() {
 		Description:   "Review code changes for correctness, security, performance, and style issues.",
 		Aliases:       []string{"review-pr", "cr"},
 		AllowedTools:  []string{"Bash", "Read", "Glob", "Grep"},
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			prompt := reviewPrompt
 			if trimmed := strings.TrimSpace(args); trimmed != "" {
@@ -123,7 +123,7 @@ func InitBundledSkills() {
 		Name:          "debug",
 		Description:   "Systematic debugging of an issue using structured investigation.",
 		Aliases:       []string{"investigate", "diagnose"},
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			prompt := debugPrompt
 			if trimmed := strings.TrimSpace(args); trimmed != "" {
@@ -140,7 +140,7 @@ func InitBundledSkills() {
 		Description:   "Run tests and analyze failures, fixing any issues found.",
 		Aliases:       []string{"run-tests"},
 		AllowedTools:  []string{"Bash", "Read", "Write", "Edit", "Glob", "Grep"},
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			prompt := testPrompt
 			if trimmed := strings.TrimSpace(args); trimmed != "" {
@@ -155,7 +155,7 @@ func InitBundledSkills() {
 		Description:   "Create a git commit with a well-crafted message based on staged changes.",
 		Aliases:       []string{"ci"},
 		AllowedTools:  []string{"Bash", "Read", "Glob", "Grep"},
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			prompt := commitPrompt
 			if trimmed := strings.TrimSpace(args); trimmed != "" {
@@ -168,7 +168,7 @@ func InitBundledSkills() {
 	RegisterSkill(Definition{
 		Name:          "simplify",
 		Description:   "Review changed code for reuse, quality, and efficiency, then fix any issues found.",
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			prompt := simplifyPrompt
 			if trimmed := strings.TrimSpace(args); trimmed != "" {

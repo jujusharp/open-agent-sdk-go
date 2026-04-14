@@ -158,15 +158,16 @@ type AgentDefinition struct {
 
 // Agent is the main agent that runs the agentic loop.
 type Agent struct {
-	opts         Options
-	apiClient    *api.Client
-	toolRegistry *tools.Registry
-	mcpClient    *mcp.Client
-	costTracker  *costtracker.Tracker
-	hookManager  *hooks.Manager
-	canUseTool   types.CanUseToolFn
-	messages     []types.Message
-	sessionID    string
+	opts            Options
+	apiClient       *api.Client
+	toolRegistry    *tools.Registry
+	mcpClient       *mcp.Client
+	costTracker     *costtracker.Tracker
+	hookManager     *hooks.Manager
+	canUseTool      types.CanUseToolFn
+	subagentSpawner tools.AgentSpawner
+	messages        []types.Message
+	sessionID       string
 }
 
 // New creates a new Agent.
@@ -212,6 +213,7 @@ func New(opts Options) *Agent {
 		canUseTool:   canUseTool,
 		sessionID:    sessionID,
 	}
+	a.subagentSpawner = a.spawnSubagent
 
 	// Register AgentTool with subagent spawner if definitions provided
 	if len(opts.Agents) > 0 {
@@ -224,7 +226,7 @@ func New(opts Options) *Agent {
 				Model:        def.Model,
 			}
 		}
-		agentTool := tools.NewAgentTool(defs, a.spawnSubagent)
+		agentTool := tools.NewAgentTool(defs, a.subagentSpawner)
 		registry.Register(agentTool)
 	} else {
 		// Register with default agent types even if none configured
@@ -233,7 +235,7 @@ func New(opts Options) *Agent {
 			"explore":         {Description: "Fast agent for codebase exploration and search"},
 			"plan":            {Description: "Planning agent for designing implementation strategies"},
 		}
-		agentTool := tools.NewAgentTool(defaultDefs, a.spawnSubagent)
+		agentTool := tools.NewAgentTool(defaultDefs, a.subagentSpawner)
 		registry.Register(agentTool)
 	}
 
@@ -347,9 +349,30 @@ func (a *Agent) Close() {
 
 // spawnSubagent creates a child agent and runs a prompt synchronously.
 func (a *Agent) spawnSubagent(ctx context.Context, config tools.SubagentConfig) (string, error) {
+	if config.Name != "" {
+		if def, ok := a.opts.Agents[config.Name]; ok {
+			if config.SystemPrompt == "" {
+				config.SystemPrompt = def.Instructions
+			}
+			if len(config.Tools) == 0 {
+				config.Tools = def.Tools
+			}
+			if config.Model == "" {
+				config.Model = def.Model
+			}
+			if config.MaxTurns == 0 && def.MaxTurns > 0 {
+				config.MaxTurns = def.MaxTurns
+			}
+		}
+	}
+
 	model := config.Model
 	if model == "" {
 		model = a.opts.Model
+	}
+	maxTurns := config.MaxTurns
+	if maxTurns == 0 {
+		maxTurns = 30
 	}
 
 	childOpts := Options{
@@ -357,9 +380,10 @@ func (a *Agent) spawnSubagent(ctx context.Context, config tools.SubagentConfig) 
 		APIKey:         a.opts.APIKey,
 		BaseURL:        a.opts.BaseURL,
 		CWD:            config.CWD,
-		MaxTurns:       30,
+		MaxTurns:       maxTurns,
 		PermissionMode: a.opts.PermissionMode,
 		SystemPrompt:   config.SystemPrompt,
+		AllowedTools:   config.Tools,
 		CustomHeaders:  a.opts.CustomHeaders,
 		ProxyURL:       a.opts.ProxyURL,
 		TimeoutMs:      a.opts.TimeoutMs,

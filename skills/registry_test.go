@@ -13,7 +13,7 @@ func TestRegistryLifecycle(t *testing.T) {
 		Name:          "lint",
 		Description:   "Run lints against the current project.",
 		Aliases:       []string{"check"},
-		UserInvocable: true,
+		UserInvocable: Bool(true),
 		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
 			return []types.ContentBlock{
 				{Type: types.ContentBlockText, Text: "lint prompt"},
@@ -56,6 +56,23 @@ func TestRegistryLifecycle(t *testing.T) {
 	}
 	if HasSkill("lint") || HasSkill("check") {
 		t.Fatal("expected skill and alias to be removed")
+	}
+}
+
+func TestUserInvocableDefaultsToVisible(t *testing.T) {
+	ClearSkills()
+
+	RegisterSkill(Definition{
+		Name:        "notes",
+		Description: "Draft release notes from recent changes.",
+		GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
+			return []types.ContentBlock{{Type: types.ContentBlockText, Text: args}}, nil
+		},
+	})
+
+	invocable := GetUserInvocableSkills()
+	if len(invocable) != 1 || invocable[0].Name != "notes" {
+		t.Fatalf("expected skill without explicit visibility flag to be invocable, got %+v", invocable)
 	}
 }
 

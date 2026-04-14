@@ -101,6 +101,8 @@ func (t *SkillTool) Call(ctx context.Context, input map[string]interface{}, tCtx
 	status := string(skill.Context)
 	if status == "" {
 		status = string(skills.ContextInline)
+	} else if skill.Context == skills.ContextFork {
+		status = "forked"
 	}
 
 	payload := skills.Result{
@@ -110,6 +112,7 @@ func (t *SkillTool) Call(ctx context.Context, input map[string]interface{}, tCtx
 		Prompt:       strings.Join(promptParts, "\n\n"),
 		AllowedTools: skill.AllowedTools,
 		Model:        skill.Model,
+		Agent:        skill.Agent,
 	}
 
 	data, err := json.Marshal(payload)
@@ -117,5 +120,11 @@ func (t *SkillTool) Call(ctx context.Context, input map[string]interface{}, tCtx
 		return nil, err
 	}
 
-	return textResult(string(data)), nil
+	return &types.ToolResult{
+		Data: payload,
+		Content: []types.ContentBlock{{
+			Type: types.ContentBlockText,
+			Text: string(data),
+		}},
+	}, nil
 }
