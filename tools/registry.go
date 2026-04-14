@@ -107,5 +107,6 @@ func GetAllBaseTools() []types.Tool {
 		NewRemoteTriggerTool(),
 		NewNotebookEditTool(),
 		NewLSPTool(),
+		NewSkillTool(),
 	}
 }

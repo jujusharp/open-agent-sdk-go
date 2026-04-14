@@ -8,7 +8,7 @@ Also available in [TypeScript](https://github.com/codeany-ai/open-agent-sdk-type
 
 - **Agent Loop** — Streaming agentic loop with tool execution, multi-turn conversations, and cost tracking
 - **Multi-Provider** — Native support for both Anthropic and OpenAI-compatible APIs (auto-detected)
-- **32 Built-in Tools** — Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent (subagents), SendMessage, Tasks, Todo, Config, Cron, PlanMode, Worktree, LSP, NotebookEdit, MCP Resources, and more
+- **33 Built-in Tools** — Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent (subagents), Skill, SendMessage, Tasks, Todo, Config, Cron, PlanMode, Worktree, LSP, NotebookEdit, MCP Resources, and more
 - **MCP Support** — Connect to MCP servers via stdio, HTTP, SSE transports, plus in-process SDK server
 - **Permission System** — Configurable tool approval with allow/deny rules, runtime mode changes, filesystem path validation, and directory allowlisting
 - **Hook System** — 11 hook events: PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, Stop, SubagentStop, SubagentStart, PreCompact, Notification, PermissionRequest, PostSampling
@@ -21,6 +21,7 @@ Also available in [TypeScript](https://github.com/codeany-ai/open-agent-sdk-type
 - **Plugins** — Local plugin loading from manifest files
 - **Cost Tracking** — Per-model token usage, API/tool duration, code change stats
 - **Fallback Model** — Automatic retry with a fallback model on API failure
+- **Skill System** — Prompt-based skill registry with bundled `review`, `debug`, `test`, `commit`, and `simplify` skills
 - **Subagent System** — Enhanced agent definitions with skills, memory, effort, maxTurns, background mode, per-agent permissions and MCP servers
 - **Custom Tools** — Implement the `Tool` interface to add your own tools
 
@@ -142,6 +143,42 @@ a := agent.New(agent.Options{
     },
 })
 ```
+
+## Skills
+
+Bundled skills are initialized automatically when you create an agent. The default tool registry now includes a `Skill` tool, so the model can invoke registered skills during the conversation.
+
+```go
+import (
+    "github.com/codeany-ai/open-agent-sdk-go/skills"
+    "github.com/codeany-ai/open-agent-sdk-go/types"
+)
+
+skills.RegisterSkill(skills.Definition{
+    Name:          "release-notes",
+    Description:   "Draft release notes from the current git diff.",
+    UserInvocable: true,
+    AllowedTools:  []string{"Bash", "Read", "Glob", "Grep"},
+    GetPrompt: func(args string, _ *types.ToolUseContext) ([]types.ContentBlock, error) {
+        prompt := "Write release notes based on the current code changes."
+        if args != "" {
+            prompt += "\n\nAdditional instructions: " + args
+        }
+        return []types.ContentBlock{{
+            Type: types.ContentBlockText,
+            Text: prompt,
+        }}, nil
+    },
+})
+```
+
+The built-in bundled skills are:
+
+- `review`
+- `debug`
+- `test`
+- `commit`
+- `simplify`
 
 ## Session Management
 
@@ -357,6 +394,7 @@ open-agent-sdk-go/
 ├── tools/              # 32 built-in tools + registry + executor
 │   └── diff/           # Unified diff generation
 ├── mcp/                # MCP client + SDK server + resources + reconnection
+├── skills/             # Skill registry + bundled prompt-based skills
 ├── permissions/        # Permission rules, runtime management, filesystem validation
 ├── hooks/              # 11 hook events with extended hook support
 ├── costtracker/        # Token usage and cost tracking

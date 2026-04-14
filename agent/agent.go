@@ -13,6 +13,7 @@ import (
 	"github.com/codeany-ai/open-agent-sdk-go/hooks"
 	"github.com/codeany-ai/open-agent-sdk-go/mcp"
 	"github.com/codeany-ai/open-agent-sdk-go/permissions"
+	"github.com/codeany-ai/open-agent-sdk-go/skills"
 	"github.com/codeany-ai/open-agent-sdk-go/tools"
 	"github.com/codeany-ai/open-agent-sdk-go/types"
 )
@@ -140,19 +141,19 @@ type Options struct {
 
 // AgentDefinition defines a subagent configuration.
 type AgentDefinition struct {
-	Description     string                          `json:"description"`
-	Instructions    string                          `json:"instructions"`
-	Tools           []string                        `json:"tools,omitempty"`
-	DisallowedTools []string                        `json:"disallowedTools,omitempty"`
-	Model           string                          `json:"model,omitempty"`
-	Skills          []string                        `json:"skills,omitempty"`
-	Memory          string                          `json:"memory,omitempty"`
-	Effort          Effort                          `json:"effort,omitempty"`
-	MaxTurns        int                             `json:"maxTurns,omitempty"`
-	Background      bool                            `json:"background,omitempty"`
-	PermissionMode  types.PermissionMode            `json:"permissionMode,omitempty"`
+	Description     string                           `json:"description"`
+	Instructions    string                           `json:"instructions"`
+	Tools           []string                         `json:"tools,omitempty"`
+	DisallowedTools []string                         `json:"disallowedTools,omitempty"`
+	Model           string                           `json:"model,omitempty"`
+	Skills          []string                         `json:"skills,omitempty"`
+	Memory          string                           `json:"memory,omitempty"`
+	Effort          Effort                           `json:"effort,omitempty"`
+	MaxTurns        int                              `json:"maxTurns,omitempty"`
+	Background      bool                             `json:"background,omitempty"`
+	PermissionMode  types.PermissionMode             `json:"permissionMode,omitempty"`
 	MCPServers      map[string]types.MCPServerConfig `json:"mcpServers,omitempty"`
-	InitialPrompt   string                          `json:"initialPrompt,omitempty"`
+	InitialPrompt   string                           `json:"initialPrompt,omitempty"`
 }
 
 // Agent is the main agent that runs the agentic loop.
@@ -171,6 +172,7 @@ type Agent struct {
 // New creates a new Agent.
 func New(opts Options) *Agent {
 	resolveEnvOptions(&opts)
+	skills.InitBundledSkills()
 
 	sessionID := uuid.New().String()
 
@@ -351,16 +353,16 @@ func (a *Agent) spawnSubagent(ctx context.Context, config tools.SubagentConfig) 
 	}
 
 	childOpts := Options{
-		Model:              model,
-		APIKey:             a.opts.APIKey,
-		BaseURL:            a.opts.BaseURL,
-		CWD:                config.CWD,
-		MaxTurns:           30,
-		PermissionMode:     a.opts.PermissionMode,
-		SystemPrompt:       config.SystemPrompt,
-		CustomHeaders:      a.opts.CustomHeaders,
-		ProxyURL:           a.opts.ProxyURL,
-		TimeoutMs:          a.opts.TimeoutMs,
+		Model:          model,
+		APIKey:         a.opts.APIKey,
+		BaseURL:        a.opts.BaseURL,
+		CWD:            config.CWD,
+		MaxTurns:       30,
+		PermissionMode: a.opts.PermissionMode,
+		SystemPrompt:   config.SystemPrompt,
+		CustomHeaders:  a.opts.CustomHeaders,
+		ProxyURL:       a.opts.ProxyURL,
+		TimeoutMs:      a.opts.TimeoutMs,
 	}
 
 	if childOpts.CWD == "" {
