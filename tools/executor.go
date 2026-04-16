@@ -28,17 +28,24 @@ type indexedToolCall struct {
 
 // Executor runs tool calls with concurrency management.
 type Executor struct {
-	registry   *Registry
-	canUseTool types.CanUseToolFn
-	toolCtx    *types.ToolUseContext
+	registry         *Registry
+	canUseTool       types.CanUseToolFn
+	permissionPrompt types.PermissionPromptFn
+	toolCtx          *types.ToolUseContext
 }
 
 // NewExecutor creates a new tool executor.
 func NewExecutor(registry *Registry, canUseTool types.CanUseToolFn, toolCtx *types.ToolUseContext) *Executor {
+	return NewExecutorWithPermissionPrompt(registry, canUseTool, nil, toolCtx)
+}
+
+// NewExecutorWithPermissionPrompt creates a new tool executor with an interactive permission prompt.
+func NewExecutorWithPermissionPrompt(registry *Registry, canUseTool types.CanUseToolFn, permissionPrompt types.PermissionPromptFn, toolCtx *types.ToolUseContext) *Executor {
 	return &Executor{
-		registry:   registry,
-		canUseTool: canUseTool,
-		toolCtx:    toolCtx,
+		registry:         registry,
+		canUseTool:       canUseTool,
+		permissionPrompt: permissionPrompt,
+		toolCtx:          toolCtx,
 	}
 }
 
@@ -128,22 +135,37 @@ func (e *Executor) runSingle(ctx context.Context, call ToolCallRequest) ToolCall
 				},
 			}
 		}
-		if decision.Behavior == types.PermissionDeny {
-			reason := decision.Reason
-			if reason == "" {
-				reason = "Permission denied"
+		if decision == nil {
+			decision = &types.PermissionDecision{Behavior: types.PermissionAllow}
+		}
+		if decision.Behavior == types.PermissionAsk {
+			promptInput := call.Input
+			if decision.UpdatedInput != nil {
+				promptInput = decision.UpdatedInput
 			}
-			return ToolCallResponse{
-				ToolUseID: call.ToolUseID,
-				Result: &types.ToolResult{
-					IsError: true,
-					Error:   reason,
-					Content: []types.ContentBlock{{
-						Type: types.ContentBlockText,
-						Text: "Error: " + reason,
-					}},
-				},
+			if e.permissionPrompt == nil {
+				return permissionDeniedResponse(call.ToolUseID, decision.Reason)
 			}
+			decision, err = e.permissionPrompt(ctx, types.PermissionPromptRequest{
+				ToolName: call.ToolName,
+				Input:    promptInput,
+				Reason:   decision.Reason,
+			})
+			if err != nil {
+				return ToolCallResponse{
+					ToolUseID: call.ToolUseID,
+					Result: &types.ToolResult{
+						IsError: true,
+						Error:   "Permission prompt failed: " + err.Error(),
+					},
+				}
+			}
+			if decision == nil {
+				decision = &types.PermissionDecision{Behavior: types.PermissionDeny}
+			}
+		}
+		if decision.Behavior == types.PermissionDeny || decision.Behavior == types.PermissionAsk {
+			return permissionDeniedResponse(call.ToolUseID, decision.Reason)
 		}
 		// Apply updated input if permission handler modified it
 		if decision.UpdatedInput != nil {
@@ -170,5 +192,22 @@ func (e *Executor) runSingle(ctx context.Context, call ToolCallRequest) ToolCall
 	return ToolCallResponse{
 		ToolUseID: call.ToolUseID,
 		Result:    result,
+	}
+}
+
+func permissionDeniedResponse(toolUseID, reason string) ToolCallResponse {
+	if reason == "" {
+		reason = "Permission denied"
+	}
+	return ToolCallResponse{
+		ToolUseID: toolUseID,
+		Result: &types.ToolResult{
+			IsError: true,
+			Error:   reason,
+			Content: []types.ContentBlock{{
+				Type: types.ContentBlockText,
+				Text: "Error: " + reason,
+			}},
+		},
 	}
 }

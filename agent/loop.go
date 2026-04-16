@@ -100,7 +100,7 @@ func (a *Agent) runLoop(ctx context.Context, prompt string, eventCh chan<- types
 	}
 
 	// Create tool executor
-	executor := tools.NewExecutor(a.toolRegistry, a.canUseTool, toolCtx)
+	executor := tools.NewExecutorWithPermissionPrompt(a.toolRegistry, a.canUseTool, a.opts.PermissionPrompt, toolCtx)
 
 	var totalUsage types.Usage
 	turn := 0

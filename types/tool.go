@@ -19,6 +19,16 @@ type PermissionDecision struct {
 	Interrupt    bool                   `json:"interrupt,omitempty"`
 }
 
+// PermissionPromptRequest describes an interactive permission prompt.
+type PermissionPromptRequest struct {
+	ToolName string                 `json:"tool_name"`
+	Input    map[string]interface{} `json:"input,omitempty"`
+	Reason   string                 `json:"reason,omitempty"`
+}
+
+// PermissionPromptFn asks the host application to resolve a permission prompt.
+type PermissionPromptFn func(ctx context.Context, request PermissionPromptRequest) (*PermissionDecision, error)
+
 // PermissionMode controls tool approval behavior.
 type PermissionMode string
 

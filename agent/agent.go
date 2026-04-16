@@ -90,6 +90,9 @@ type Options struct {
 	// Permission handler callback
 	CanUseTool types.CanUseToolFn
 
+	// Permission prompt callback for interactive approval requests
+	PermissionPrompt types.PermissionPromptFn
+
 	// MCP server configurations
 	MCPServers map[string]types.MCPServerConfig
 
@@ -386,17 +389,18 @@ func (a *Agent) spawnSubagent(ctx context.Context, config tools.SubagentConfig) 
 	}
 
 	childOpts := Options{
-		Model:          model,
-		APIKey:         a.opts.APIKey,
-		BaseURL:        a.opts.BaseURL,
-		CWD:            config.CWD,
-		MaxTurns:       maxTurns,
-		PermissionMode: a.opts.PermissionMode,
-		SystemPrompt:   config.SystemPrompt,
-		AllowedTools:   config.Tools,
-		CustomHeaders:  a.opts.CustomHeaders,
-		ProxyURL:       a.opts.ProxyURL,
-		TimeoutMs:      a.opts.TimeoutMs,
+		Model:            model,
+		APIKey:           a.opts.APIKey,
+		BaseURL:          a.opts.BaseURL,
+		CWD:              config.CWD,
+		MaxTurns:         maxTurns,
+		PermissionMode:   a.opts.PermissionMode,
+		SystemPrompt:     config.SystemPrompt,
+		AllowedTools:     config.Tools,
+		CustomHeaders:    a.opts.CustomHeaders,
+		ProxyURL:         a.opts.ProxyURL,
+		TimeoutMs:        a.opts.TimeoutMs,
+		PermissionPrompt: a.opts.PermissionPrompt,
 	}
 
 	if childOpts.CWD == "" {

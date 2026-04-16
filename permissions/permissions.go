@@ -178,9 +178,17 @@ func NewCanUseToolFn(config *Config, allowedTools []string) types.CanUseToolFn {
 			if tool.IsReadOnly(input) || isFileEditTool(toolName) {
 				return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
 			}
-			return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
+			return &types.PermissionDecision{Behavior: types.PermissionAsk}, nil
 		case types.PermissionModePlan:
-			return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
+			if tool.IsReadOnly(input) {
+				return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
+			}
+			return &types.PermissionDecision{Behavior: types.PermissionAsk}, nil
+		case types.PermissionModeDefault:
+			if tool.IsReadOnly(input) {
+				return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
+			}
+			return &types.PermissionDecision{Behavior: types.PermissionAsk}, nil
 		default:
 			return &types.PermissionDecision{Behavior: types.PermissionAllow}, nil
 		}
