@@ -9,7 +9,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // LoadFromDirs loads skills from <dir>/<skill>/SKILL.md directories.

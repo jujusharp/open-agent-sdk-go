@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // TaskStatus represents the status of a task.
@@ -206,8 +206,10 @@ func (t *TaskListTool) Call(ctx context.Context, input map[string]interface{}, t
 // TaskUpdateTool updates a task.
 type TaskUpdateTool struct{ Store *TaskStore }
 
-func (t *TaskUpdateTool) Name() string        { return "TaskUpdate" }
-func (t *TaskUpdateTool) Description() string { return "Update a task's status, subject, or description." }
+func (t *TaskUpdateTool) Name() string { return "TaskUpdate" }
+func (t *TaskUpdateTool) Description() string {
+	return "Update a task's status, subject, or description."
+}
 func (t *TaskUpdateTool) InputSchema() types.ToolInputSchema {
 	return types.ToolInputSchema{
 		Type: "object",

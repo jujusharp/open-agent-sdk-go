@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // SdkMcpTool defines a tool for the SDK MCP server.

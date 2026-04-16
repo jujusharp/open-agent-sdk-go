@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
 	"github.com/google/uuid"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // WorktreeEntry holds metadata for an active git worktree.
@@ -68,8 +68,10 @@ func NewEnterWorktreeTool(store *WorktreeStore) *EnterWorktreeTool {
 	return &EnterWorktreeTool{Store: store}
 }
 
-func (t *EnterWorktreeTool) Name() string        { return "EnterWorktree" }
-func (t *EnterWorktreeTool) Description() string { return "Create an isolated git worktree for parallel work." }
+func (t *EnterWorktreeTool) Name() string { return "EnterWorktree" }
+func (t *EnterWorktreeTool) Description() string {
+	return "Create an isolated git worktree for parallel work."
+}
 func (t *EnterWorktreeTool) InputSchema() types.ToolInputSchema {
 	return types.ToolInputSchema{
 		Type: "object",
@@ -80,7 +82,7 @@ func (t *EnterWorktreeTool) InputSchema() types.ToolInputSchema {
 	}
 }
 func (t *EnterWorktreeTool) IsConcurrencySafe(_ map[string]interface{}) bool { return false }
-func (t *EnterWorktreeTool) IsReadOnly(_ map[string]interface{}) bool         { return false }
+func (t *EnterWorktreeTool) IsReadOnly(_ map[string]interface{}) bool        { return false }
 
 func (t *EnterWorktreeTool) Call(ctx context.Context, input map[string]interface{}, tCtx *types.ToolUseContext) (*types.ToolResult, error) {
 	cwd := tCtx.WorkingDir
@@ -133,7 +135,7 @@ func (t *ExitWorktreeTool) InputSchema() types.ToolInputSchema {
 	}
 }
 func (t *ExitWorktreeTool) IsConcurrencySafe(_ map[string]interface{}) bool { return false }
-func (t *ExitWorktreeTool) IsReadOnly(_ map[string]interface{}) bool         { return false }
+func (t *ExitWorktreeTool) IsReadOnly(_ map[string]interface{}) bool        { return false }
 
 func (t *ExitWorktreeTool) Call(ctx context.Context, input map[string]interface{}, tCtx *types.ToolUseContext) (*types.ToolResult, error) {
 	id, _ := input["id"].(string)

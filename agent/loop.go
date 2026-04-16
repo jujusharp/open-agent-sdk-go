@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/codeany-ai/open-agent-sdk-go/api"
-	agentcontext "github.com/codeany-ai/open-agent-sdk-go/context"
-	"github.com/codeany-ai/open-agent-sdk-go/tools"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/api"
+	agentcontext "github.com/jujusharp/open-agent-sdk-go/context"
+	"github.com/jujusharp/open-agent-sdk-go/tools"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 const defaultSystemPrompt = `You are an AI assistant with access to tools. Use the tools available to you to help the user with their request. Be concise and direct in your responses.`

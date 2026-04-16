@@ -11,13 +11,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/codeany-ai/open-agent-sdk-go/agent"
+	"github.com/jujusharp/open-agent-sdk-go/agent"
 )
 
 func main() {
 	fmt.Println("--- Example 4: Simple Prompt API ---")
 
-	model := os.Getenv("CODEANY_MODEL")
+	model := os.Getenv("OPEN_AGENT_MODEL")
 	if model == "" {
 		model = "sonnet-4-6"
 	}

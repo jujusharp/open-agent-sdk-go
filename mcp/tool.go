@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // MCPTool wraps an MCP server tool as a types.Tool.
@@ -30,9 +30,9 @@ func NewMCPTool(serverName string, def types.MCPToolDefinition, conn *Connection
 	}
 }
 
-func (t *MCPTool) Name() string        { return t.prefixedName }
-func (t *MCPTool) Description() string  { return t.description }
-func (t *MCPTool) InputSchema() types.ToolInputSchema { return t.inputSchema }
+func (t *MCPTool) Name() string                                        { return t.prefixedName }
+func (t *MCPTool) Description() string                                 { return t.description }
+func (t *MCPTool) InputSchema() types.ToolInputSchema                  { return t.inputSchema }
 func (t *MCPTool) IsConcurrencySafe(input map[string]interface{}) bool { return false }
 func (t *MCPTool) IsReadOnly(input map[string]interface{}) bool        { return false }
 

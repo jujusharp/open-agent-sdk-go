@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/codeany-ai/open-agent-sdk-go/skills"
+	"github.com/jujusharp/open-agent-sdk-go/skills"
 )
 
 func TestNewLoadsFileSkillsFromConfiguredDirs(t *testing.T) {

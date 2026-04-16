@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/agent"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/agent"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 //go:embed index.html
@@ -69,7 +69,7 @@ func getOrCreateAgent() *agent.Agent {
 	defer agentMu.Unlock()
 
 	if agentInstance == nil {
-		model := os.Getenv("CODEANY_MODEL")
+		model := os.Getenv("OPEN_AGENT_MODEL")
 		if model == "" {
 			model = "sonnet-4-6"
 		}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // WebSearchTool performs web searches.

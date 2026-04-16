@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 const defaultGrepHeadLimit = 250

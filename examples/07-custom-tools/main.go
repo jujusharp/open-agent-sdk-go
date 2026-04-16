@@ -14,14 +14,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/agent"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/agent"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // weatherTool is a custom tool that returns weather data.
 type weatherTool struct{}
 
-func (t *weatherTool) Name() string        { return "GetWeather" }
+func (t *weatherTool) Name() string { return "GetWeather" }
 func (t *weatherTool) Description() string {
 	return "Get current weather for a city. Returns temperature and conditions."
 }
@@ -58,7 +58,7 @@ func (t *weatherTool) Call(ctx context.Context, input map[string]interface{}, tC
 // calculatorTool is a custom tool that evaluates simple math expressions.
 type calculatorTool struct{}
 
-func (t *calculatorTool) Name() string        { return "Calculator" }
+func (t *calculatorTool) Name() string { return "Calculator" }
 func (t *calculatorTool) Description() string {
 	return "Evaluate a simple mathematical expression with two numbers and an operator (+, -, *, /, **)."
 }
@@ -131,7 +131,7 @@ func evalSimpleExpr(expr string) (string, error) {
 func main() {
 	fmt.Println("--- Example 7: Custom Tools ---")
 
-	model := os.Getenv("CODEANY_MODEL")
+	model := os.Getenv("OPEN_AGENT_MODEL")
 	if model == "" {
 		model = "sonnet-4-6"
 	}

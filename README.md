@@ -2,8 +2,6 @@
 
 A lightweight, open-source Go SDK for building AI agents. Run the full agent loop in-process — no CLI or subprocess required. Deploy anywhere: cloud, serverless, Docker, CI/CD.
 
-Also available in [TypeScript](https://github.com/codeany-ai/open-agent-sdk-typescript).
-
 ## Features
 
 - **Agent Loop** — Streaming agentic loop with tool execution, multi-turn conversations, and cost tracking
@@ -28,7 +26,7 @@ Also available in [TypeScript](https://github.com/codeany-ai/open-agent-sdk-type
 ## Quick Start
 
 ```bash
-go get github.com/codeany-ai/open-agent-sdk-go
+go get github.com/jujusharp/open-agent-sdk-go
 ```
 
 ```go
@@ -39,14 +37,14 @@ import (
     "fmt"
     "os"
 
-    "github.com/codeany-ai/open-agent-sdk-go/agent"
-    "github.com/codeany-ai/open-agent-sdk-go/types"
+    "github.com/jujusharp/open-agent-sdk-go/agent"
+    "github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 func main() {
     a := agent.New(agent.Options{
         Model:  "sonnet-4-6",
-        APIKey: os.Getenv("CODEANY_API_KEY"),
+        APIKey: os.Getenv("OPEN_AGENT_API_KEY"),
     })
     defer a.Close()
 
@@ -152,8 +150,8 @@ Within the current query, inline skills can now inject their prompt into subsequ
 
 ```go
 import (
-    "github.com/codeany-ai/open-agent-sdk-go/skills"
-    "github.com/codeany-ai/open-agent-sdk-go/types"
+    "github.com/jujusharp/open-agent-sdk-go/skills"
+    "github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 skills.RegisterSkill(skills.Definition{
@@ -262,7 +260,7 @@ If `SkillDirs` is omitted, the agent will automatically look in these standard l
 ## Session Management
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/session"
+import "github.com/jujusharp/open-agent-sdk-go/session"
 
 mgr := session.NewManager("")  // default ~/.claude/projects/
 
@@ -302,7 +300,7 @@ a := agent.New(agent.Options{
 ## Permissions
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/permissions"
+import "github.com/jujusharp/open-agent-sdk-go/permissions"
 
 config := &permissions.Config{
     Mode: types.PermissionModeDefault,
@@ -345,7 +343,7 @@ a.Init(ctx) // Connects to MCP servers
 ### In-Process MCP SDK Server
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/mcp"
+import "github.com/jujusharp/open-agent-sdk-go/mcp"
 
 server := mcp.NewSdkServer("my-tools", "1.0.0")
 server.RegisterTool(&mcp.SdkMcpTool{
@@ -370,7 +368,7 @@ server.RegisterTool(&mcp.SdkMcpTool{
 ## File Checkpointing
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/checkpoint"
+import "github.com/jujusharp/open-agent-sdk-go/checkpoint"
 
 mgr := checkpoint.NewManager(true)
 mgr.TrackFile("/path/to/important/file.go")
@@ -383,7 +381,7 @@ mgr.RewindTo("msg-001")          // Restore to snapshot
 ## Rate Limiting
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/ratelimit"
+import "github.com/jujusharp/open-agent-sdk-go/ratelimit"
 
 tracker := ratelimit.NewTracker(func(event ratelimit.RateLimitEvent) {
     if event.Info.Status == ratelimit.RateLimitRejected {
@@ -398,7 +396,7 @@ tracker.ParseHeaders(resp.Header)
 ## Sandbox
 
 ```go
-import "github.com/codeany-ai/open-agent-sdk-go/sandbox"
+import "github.com/jujusharp/open-agent-sdk-go/sandbox"
 
 validator := sandbox.NewValidator(sandbox.Settings{
     Enabled:          true,
@@ -457,9 +455,9 @@ a := agent.New(agent.Options{
 Run any example:
 
 ```bash
-export CODEANY_BASE_URL=https://openrouter.ai/api
-export CODEANY_API_KEY=your-api-key
-export CODEANY_MODEL=anthropic/claude-sonnet-4
+export OPEN_AGENT_BASE_URL=https://openrouter.ai/api
+export OPEN_AGENT_API_KEY=your-api-key
+export OPEN_AGENT_MODEL=anthropic/claude-sonnet-4
 go run ./examples/01-simple-query/
 ```
 
@@ -477,7 +475,7 @@ open-agent-sdk-go/
 ├── permissions/        # Permission rules, runtime management, filesystem validation
 ├── hooks/              # 11 hook events with extended hook support
 ├── costtracker/        # Token usage and cost tracking
-├── context/            # System/user context injection (git status, CODEANY.md)
+├── context/            # System/user context injection (git status, OPEN_AGENT.md)
 ├── history/            # Conversation history persistence (JSONL)
 ├── session/            # Session management (list, get, rename, tag, delete, fork)
 ├── ratelimit/          # Rate limit header parsing and tracking
@@ -494,20 +492,18 @@ Environment variables:
 
 | Variable                     | Description                                  |
 | ---------------------------- | -------------------------------------------- |
-| `CODEANY_API_KEY`            | API key (required)                           |
-| `CODEANY_MODEL`              | Default model (default: `sonnet-4-6`)        |
-| `CODEANY_BASE_URL`           | API base URL override                        |
-| `CODEANY_CUSTOM_HEADERS`     | Custom headers (comma-separated `key:value`) |
+| `OPEN_AGENT_API_KEY`         | API key (required)                           |
+| `OPEN_AGENT_MODEL`           | Default model (default: `sonnet-4-6`)        |
+| `OPEN_AGENT_BASE_URL`        | API base URL override                        |
+| `OPEN_AGENT_CUSTOM_HEADERS`  | Custom headers (comma-separated `key:value`) |
 | `API_TIMEOUT_MS`             | API request timeout in ms                    |
 | `HTTPS_PROXY` / `HTTP_PROXY` | Proxy URL                                    |
 
-Also supports `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL` for compatibility.
+Also supports legacy `CODEANY_*` and `ANTHROPIC_*` variables for compatibility.
 
 ## Links
 
-- Website: [codeany.ai](https://codeany.ai)
-- TypeScript SDK: [github.com/codeany-ai/open-agent-sdk-typescript](https://github.com/codeany-ai/open-agent-sdk-typescript)
-- Issues: [github.com/codeany-ai/open-agent-sdk-go/issues](https://github.com/codeany-ai/open-agent-sdk-go/issues)
+- Issues: [github.com/jujusharp/open-agent-sdk-go/issues](https://github.com/jujusharp/open-agent-sdk-go/issues)
 
 ## License
 

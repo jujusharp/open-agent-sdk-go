@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/skills"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/skills"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // SkillTool invokes prompt-based skills registered in the global skills registry.

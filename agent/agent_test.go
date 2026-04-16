@@ -3,7 +3,7 @@ package agent
 import (
 	"testing"
 
-	"github.com/codeany-ai/open-agent-sdk-go/skills"
+	"github.com/jujusharp/open-agent-sdk-go/skills"
 )
 
 func TestNewInitializesBundledSkills(t *testing.T) {

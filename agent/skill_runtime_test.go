@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codeany-ai/open-agent-sdk-go/skills"
-	"github.com/codeany-ai/open-agent-sdk-go/tools"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/skills"
+	"github.com/jujusharp/open-agent-sdk-go/tools"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 type fakeTool struct{ name string }

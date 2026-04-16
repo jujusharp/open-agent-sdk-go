@@ -11,14 +11,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/codeany-ai/open-agent-sdk-go/agent"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/agent"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 func main() {
 	fmt.Println("--- Example 9: Subagents ---")
 
-	model := os.Getenv("CODEANY_MODEL")
+	model := os.Getenv("OPEN_AGENT_MODEL")
 	if model == "" {
 		model = "sonnet-4-6"
 	}

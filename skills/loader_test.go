@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 func TestLoadFromDirsRegistersMarkdownSkill(t *testing.T) {

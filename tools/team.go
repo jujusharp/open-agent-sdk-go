@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // Team represents a multi-agent team.
@@ -71,8 +71,10 @@ type TeamCreateTool struct{ Store *TeamStore }
 // NewTeamCreateTool creates a new TeamCreateTool.
 func NewTeamCreateTool(store *TeamStore) *TeamCreateTool { return &TeamCreateTool{Store: store} }
 
-func (t *TeamCreateTool) Name() string        { return "TeamCreate" }
-func (t *TeamCreateTool) Description() string { return "Create a multi-agent team for coordinated work." }
+func (t *TeamCreateTool) Name() string { return "TeamCreate" }
+func (t *TeamCreateTool) Description() string {
+	return "Create a multi-agent team for coordinated work."
+}
 func (t *TeamCreateTool) InputSchema() types.ToolInputSchema {
 	return types.ToolInputSchema{
 		Type: "object",

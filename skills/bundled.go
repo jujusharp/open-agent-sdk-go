@@ -3,7 +3,7 @@ package skills
 import (
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 const reviewPrompt = `Review the current code changes for potential issues. Follow these steps:

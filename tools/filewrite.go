@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/tools/diff"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/tools/diff"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // FileWriteTool writes content to files with staleness detection and diff generation.

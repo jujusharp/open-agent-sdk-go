@@ -3,7 +3,7 @@ package contextusage
 import (
 	"testing"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 func TestNewTracker_Defaults(t *testing.T) {

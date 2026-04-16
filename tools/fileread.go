@@ -14,7 +14,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 const (
@@ -59,8 +59,8 @@ func (t *FileReadTool) InputSchema() types.ToolInputSchema {
 				"minimum":     0,
 			},
 			"limit": map[string]interface{}{
-				"type":        "number",
-				"description": "The number of lines to read",
+				"type":             "number",
+				"description":      "The number of lines to read",
 				"exclusiveMinimum": 0,
 			},
 			"pages": map[string]interface{}{
@@ -246,9 +246,9 @@ func (t *FileReadTool) readNotebook(filePath string) (*types.ToolResult, error) 
 		Cells []struct {
 			CellType string   `json:"cell_type"`
 			Source   []string `json:"source"`
-			Outputs []struct {
-				OutputType string   `json:"output_type"`
-				Text       []string `json:"text,omitempty"`
+			Outputs  []struct {
+				OutputType string                 `json:"output_type"`
+				Text       []string               `json:"text,omitempty"`
 				Data       map[string]interface{} `json:"data,omitempty"`
 			} `json:"outputs,omitempty"`
 		} `json:"cells"`

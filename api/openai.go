@@ -11,29 +11,29 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // ─── OpenAI request/response types ───────────────
 
 type openAIRequest struct {
-	Model       string                `json:"model"`
-	Messages    []openAIMessage       `json:"messages"`
-	Tools       []openAITool          `json:"tools,omitempty"`
-	ToolChoice  interface{}           `json:"tool_choice,omitempty"`
-	Stream      bool                  `json:"stream"`
-	MaxTokens   int                   `json:"max_tokens,omitempty"`
-	Temperature *float64              `json:"temperature,omitempty"`
-	TopP        *float64              `json:"top_p,omitempty"`
-	Stop        []string              `json:"stop,omitempty"`
+	Model       string          `json:"model"`
+	Messages    []openAIMessage `json:"messages"`
+	Tools       []openAITool    `json:"tools,omitempty"`
+	ToolChoice  interface{}     `json:"tool_choice,omitempty"`
+	Stream      bool            `json:"stream"`
+	MaxTokens   int             `json:"max_tokens,omitempty"`
+	Temperature *float64        `json:"temperature,omitempty"`
+	TopP        *float64        `json:"top_p,omitempty"`
+	Stop        []string        `json:"stop,omitempty"`
 }
 
 type openAIMessage struct {
-	Role       string               `json:"role"`
-	Content    interface{}          `json:"content"`           // string or []openAIContentPart
-	ToolCalls  []openAIToolCall     `json:"tool_calls,omitempty"`
-	ToolCallID string               `json:"tool_call_id,omitempty"`
-	Name       string               `json:"name,omitempty"`
+	Role       string           `json:"role"`
+	Content    interface{}      `json:"content"` // string or []openAIContentPart
+	ToolCalls  []openAIToolCall `json:"tool_calls,omitempty"`
+	ToolCallID string           `json:"tool_call_id,omitempty"`
+	Name       string           `json:"name,omitempty"`
 }
 
 type openAIContentPart struct {
@@ -53,9 +53,10 @@ type openAIFunction struct {
 }
 
 type openAIToolCall struct {
-	ID       string `json:"id"`
-	Type     string `json:"type"`
-	Function struct {
+	CallIndex int    `json:"index,omitempty"`
+	ID        string `json:"id"`
+	Type      string `json:"type"`
+	Function  struct {
 		Name      string `json:"name"`
 		Arguments string `json:"arguments"`
 	} `json:"function"`
@@ -300,7 +301,7 @@ func convertOpenAIStreamChunk(data []byte) (*StreamEvent, error) {
 
 // Index returns the index of a tool call (stored in the zero-based index field)
 func (tc openAIToolCall) Index() int {
-	return 0 // OpenAI uses array index, we default to 0
+	return tc.CallIndex
 }
 
 func convertOpenAIResponse(resp openAIResponse) *StreamMessage {
@@ -402,10 +403,14 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 		},
 	}
 
-	// Track tool call state for reassembly
-	var currentToolCalls []openAIToolCall
+	// Track content block indexes so tool argument deltas attach to the correct
+	// block even when assistant text precedes a tool call.
+	toolBlockIndexes := make(map[int]int)
+	toolStopOrder := make([]int, 0)
 	var accumulatedText strings.Builder
 	textBlockStarted := false
+	textBlockIndex := -1
+	nextContentIndex := 0
 
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
@@ -435,9 +440,11 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 		// Text delta
 		if content, ok := delta.Content.(string); ok && content != "" {
 			if !textBlockStarted {
+				textBlockIndex = nextContentIndex
+				nextContentIndex++
 				eventCh <- StreamEvent{
 					Type:  "content_block_start",
-					Index: 0,
+					Index: textBlockIndex,
 					ContentBlock: &types.ContentBlock{
 						Type: types.ContentBlockText,
 					},
@@ -446,7 +453,8 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 			}
 			accumulatedText.WriteString(content)
 			eventCh <- StreamEvent{
-				Type: "content_block_delta",
+				Type:  "content_block_delta",
+				Index: textBlockIndex,
 				Delta: map[string]interface{}{
 					"type": "text_delta",
 					"text": content,
@@ -456,10 +464,12 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 
 		// Tool call deltas
 		for _, tc := range delta.ToolCalls {
+			toolIndex := tc.CallIndex
+
 			// New tool call
 			if tc.Function.Name != "" {
 				if textBlockStarted {
-					eventCh <- StreamEvent{Type: "content_block_stop"}
+					eventCh <- StreamEvent{Type: "content_block_stop", Index: textBlockIndex}
 					textBlockStarted = false
 				}
 
@@ -468,14 +478,17 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 					toolID = fmt.Sprintf("call_%s", uuid.New().String()[:8])
 				}
 
-				currentToolCalls = append(currentToolCalls, openAIToolCall{
-					ID:   toolID,
-					Type: "function",
-				})
-				currentToolCalls[len(currentToolCalls)-1].Function.Name = tc.Function.Name
+				blockIndex, ok := toolBlockIndexes[toolIndex]
+				if !ok {
+					blockIndex = nextContentIndex
+					nextContentIndex++
+					toolBlockIndexes[toolIndex] = blockIndex
+					toolStopOrder = append(toolStopOrder, toolIndex)
+				}
 
 				eventCh <- StreamEvent{
-					Type: "content_block_start",
+					Type:  "content_block_start",
+					Index: blockIndex,
 					ContentBlock: &types.ContentBlock{
 						Type: types.ContentBlockToolUse,
 						ID:   toolID,
@@ -485,11 +498,17 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 			}
 
 			// Argument delta
-			if tc.Function.Arguments != "" && len(currentToolCalls) > 0 {
-				idx := len(currentToolCalls) - 1
-				currentToolCalls[idx].Function.Arguments += tc.Function.Arguments
+			if tc.Function.Arguments != "" {
+				blockIndex, ok := toolBlockIndexes[toolIndex]
+				if !ok {
+					blockIndex = nextContentIndex
+					nextContentIndex++
+					toolBlockIndexes[toolIndex] = blockIndex
+					toolStopOrder = append(toolStopOrder, toolIndex)
+				}
 				eventCh <- StreamEvent{
-					Type: "content_block_delta",
+					Type:  "content_block_delta",
+					Index: blockIndex,
 					Delta: map[string]interface{}{
 						"type":         "input_json_delta",
 						"partial_json": tc.Function.Arguments,
@@ -501,11 +520,14 @@ func (c *Client) createOpenAIStream(ctx context.Context, req MessagesRequest, ev
 		// Finish reason
 		if chunk.Choices[0].FinishReason != "" {
 			if textBlockStarted {
-				eventCh <- StreamEvent{Type: "content_block_stop"}
+				eventCh <- StreamEvent{Type: "content_block_stop", Index: textBlockIndex}
+				textBlockStarted = false
 			}
-			for range currentToolCalls {
-				eventCh <- StreamEvent{Type: "content_block_stop"}
+			for _, toolIndex := range toolStopOrder {
+				eventCh <- StreamEvent{Type: "content_block_stop", Index: toolBlockIndexes[toolIndex]}
 			}
+			toolBlockIndexes = make(map[int]int)
+			toolStopOrder = toolStopOrder[:0]
 		}
 	}
 

@@ -8,14 +8,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/codeany-ai/open-agent-sdk-go/api"
-	"github.com/codeany-ai/open-agent-sdk-go/costtracker"
-	"github.com/codeany-ai/open-agent-sdk-go/hooks"
-	"github.com/codeany-ai/open-agent-sdk-go/mcp"
-	"github.com/codeany-ai/open-agent-sdk-go/permissions"
-	"github.com/codeany-ai/open-agent-sdk-go/skills"
-	"github.com/codeany-ai/open-agent-sdk-go/tools"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/api"
+	"github.com/jujusharp/open-agent-sdk-go/costtracker"
+	"github.com/jujusharp/open-agent-sdk-go/hooks"
+	"github.com/jujusharp/open-agent-sdk-go/mcp"
+	"github.com/jujusharp/open-agent-sdk-go/permissions"
+	"github.com/jujusharp/open-agent-sdk-go/skills"
+	"github.com/jujusharp/open-agent-sdk-go/tools"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 const (
@@ -450,7 +450,7 @@ func (a *Agent) MCPClient() *mcp.Client {
 }
 
 // envFirst returns the first non-empty value from the env map or os env,
-// trying CODEANY_ prefix first, then ANTHROPIC_ for compatibility.
+// preferring OPEN_AGENT_ names and keeping legacy prefixes for compatibility.
 func envFirst(env map[string]string, keys ...string) string {
 	for _, key := range keys {
 		if env != nil {
@@ -469,15 +469,15 @@ func resolveEnvOptions(opts *Options) {
 	env := opts.Env
 
 	if opts.APIKey == "" {
-		opts.APIKey = envFirst(env, "CODEANY_API_KEY", "ANTHROPIC_API_KEY", "CODEANY_AUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN")
+		opts.APIKey = envFirst(env, "OPEN_AGENT_API_KEY", "CODEANY_API_KEY", "ANTHROPIC_API_KEY", "OPEN_AGENT_AUTH_TOKEN", "CODEANY_AUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN")
 	}
 
 	if opts.BaseURL == "" {
-		opts.BaseURL = envFirst(env, "CODEANY_BASE_URL", "ANTHROPIC_BASE_URL")
+		opts.BaseURL = envFirst(env, "OPEN_AGENT_BASE_URL", "CODEANY_BASE_URL", "ANTHROPIC_BASE_URL")
 	}
 
 	if opts.Model == "" {
-		opts.Model = envFirst(env, "CODEANY_MODEL", "ANTHROPIC_MODEL")
+		opts.Model = envFirst(env, "OPEN_AGENT_MODEL", "CODEANY_MODEL", "ANTHROPIC_MODEL")
 		if opts.Model == "" {
 			opts.Model = "sonnet-4-6"
 		}

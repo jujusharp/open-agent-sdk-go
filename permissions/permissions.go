@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // Rule represents a permission rule.

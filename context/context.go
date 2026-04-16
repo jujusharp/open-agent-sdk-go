@@ -18,7 +18,7 @@ type SystemContext struct {
 
 // UserContext holds user-level context for the agent.
 type UserContext struct {
-	ProjectMD    string `json:"projectMd,omitempty"`
+	ProjectMD   string `json:"projectMd,omitempty"`
 	CurrentDate string `json:"currentDate,omitempty"`
 }
 
@@ -27,7 +27,7 @@ var (
 	systemContext     *SystemContext
 
 	userContextOnce sync.Once
-	userContext      *UserContext
+	userContext     *UserContext
 )
 
 // GetSystemContext returns system context (memoized for the session).
@@ -44,7 +44,7 @@ func GetSystemContext(cwd string) *SystemContext {
 func GetUserContext(cwd string) *UserContext {
 	userContextOnce.Do(func() {
 		userContext = &UserContext{
-			ProjectMD:    loadProjectMD(cwd),
+			ProjectMD:   loadProjectMD(cwd),
 			CurrentDate: fmt.Sprintf("Today's date is %s.", time.Now().Format("2006-01-02")),
 		}
 	})
@@ -70,8 +70,8 @@ func BuildSystemPromptBlocks(systemPrompt string, sysCtx *SystemContext, userCtx
 
 	if sysCtx != nil && sysCtx.GitStatus != "" {
 		blocks = append(blocks, map[string]interface{}{
-			"type": "text",
-			"text": sysCtx.GitStatus,
+			"type":          "text",
+			"text":          sysCtx.GitStatus,
 			"cache_control": map[string]string{"type": "ephemeral"},
 		})
 	}
@@ -86,8 +86,8 @@ func BuildSystemPromptBlocks(systemPrompt string, sysCtx *SystemContext, userCtx
 		}
 		if len(contextParts) > 0 {
 			blocks = append(blocks, map[string]interface{}{
-				"type": "text",
-				"text": strings.Join(contextParts, "\n\n"),
+				"type":          "text",
+				"text":          strings.Join(contextParts, "\n\n"),
 				"cache_control": map[string]string{"type": "ephemeral"},
 			})
 		}
@@ -146,10 +146,12 @@ func gitCmd(cwd string, args ...string) string {
 }
 
 func loadProjectMD(cwd string) string {
-	// Check for CODEANY.md and CLAUDE.md in the project root and config dirs
+	// Check for OPEN_AGENT.md first, then legacy CODEANY.md and CLAUDE.md.
 	candidates := []string{
+		filepath.Join(cwd, "OPEN_AGENT.md"),
 		filepath.Join(cwd, "CODEANY.md"),
 		filepath.Join(cwd, "CLAUDE.md"),
+		filepath.Join(cwd, ".open-agent", "OPEN_AGENT.md"),
 		filepath.Join(cwd, ".codeany", "CODEANY.md"),
 		filepath.Join(cwd, ".claude", "CLAUDE.md"),
 	}
@@ -157,6 +159,7 @@ func loadProjectMD(cwd string) string {
 	// Also check home directory
 	if home, err := os.UserHomeDir(); err == nil {
 		candidates = append(candidates,
+			filepath.Join(home, ".open-agent", "OPEN_AGENT.md"),
 			filepath.Join(home, ".codeany", "CODEANY.md"),
 			filepath.Join(home, ".claude", "CLAUDE.md"),
 		)

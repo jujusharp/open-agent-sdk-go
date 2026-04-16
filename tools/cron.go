@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // CronJob represents a scheduled recurring task.
@@ -67,7 +67,7 @@ func (s *CronStore) List() []CronJob {
 type CronCreateTool struct{ Store *CronStore }
 
 func NewCronCreateTool(store *CronStore) *CronCreateTool { return &CronCreateTool{Store: store} }
-func (t *CronCreateTool) Name() string                  { return "CronCreate" }
+func (t *CronCreateTool) Name() string                   { return "CronCreate" }
 func (t *CronCreateTool) Description() string {
 	return "Create a scheduled recurring task (cron job)."
 }
@@ -96,8 +96,8 @@ func (t *CronCreateTool) Call(ctx context.Context, input map[string]interface{},
 type CronDeleteTool struct{ Store *CronStore }
 
 func NewCronDeleteTool(store *CronStore) *CronDeleteTool { return &CronDeleteTool{Store: store} }
-func (t *CronDeleteTool) Name() string                  { return "CronDelete" }
-func (t *CronDeleteTool) Description() string           { return "Delete a scheduled cron job." }
+func (t *CronDeleteTool) Name() string                   { return "CronDelete" }
+func (t *CronDeleteTool) Description() string            { return "Delete a scheduled cron job." }
 func (t *CronDeleteTool) InputSchema() types.ToolInputSchema {
 	return types.ToolInputSchema{
 		Type:       "object",

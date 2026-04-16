@@ -1,8 +1,8 @@
 package skills
 
 import (
-	"github.com/codeany-ai/open-agent-sdk-go/hooks"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/hooks"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // ContextType controls where the skill should execute.

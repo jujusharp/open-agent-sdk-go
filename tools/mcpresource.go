@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/codeany-ai/open-agent-sdk-go/mcp"
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/mcp"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // ListMcpResourcesTool lists available resources from connected MCP servers.

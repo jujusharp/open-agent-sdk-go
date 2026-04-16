@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // ModelUsage tracks usage for a specific model.
@@ -28,8 +28,8 @@ type Tracker struct {
 	sessionID    string
 
 	// Duration tracking
-	totalAPIDuration    time.Duration
-	totalToolDuration   time.Duration
+	totalAPIDuration  time.Duration
+	totalToolDuration time.Duration
 
 	// Code change tracking
 	totalLinesAdded   int
@@ -51,10 +51,10 @@ func NewTracker(sessionID string) *Tracker {
 var modelPricing = map[string]struct {
 	inputPerM, outputPerM, cacheReadPerM, cacheWritePerM float64
 }{
-	"sonnet-4-6":   {3.0, 15.0, 0.3, 3.75},
-	"opus-4-6":     {15.0, 75.0, 1.5, 18.75},
-	"haiku-4-5":    {0.8, 4.0, 0.08, 1.0},
-	"sonnet-4-5":   {3.0, 15.0, 0.3, 3.75},
+	"sonnet-4-6": {3.0, 15.0, 0.3, 3.75},
+	"opus-4-6":   {15.0, 75.0, 1.5, 18.75},
+	"haiku-4-5":  {0.8, 4.0, 0.08, 1.0},
+	"sonnet-4-5": {3.0, 15.0, 0.3, 3.75},
 }
 
 // AddUsage records token usage and cost for a model.
@@ -166,9 +166,9 @@ func (t *Tracker) Restore(configDir string) error {
 	}
 
 	var state struct {
-		SessionID  string                  `json:"sessionId"`
-		TotalCost  float64                 `json:"totalCost"`
-		ModelUsage map[string]*ModelUsage  `json:"modelUsage"`
+		SessionID  string                 `json:"sessionId"`
+		TotalCost  float64                `json:"totalCost"`
+		ModelUsage map[string]*ModelUsage `json:"modelUsage"`
 	}
 	if err := json.Unmarshal(data, &state); err != nil {
 		return err

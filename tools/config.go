@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/codeany-ai/open-agent-sdk-go/types"
+	"github.com/jujusharp/open-agent-sdk-go/types"
 )
 
 // ConfigStore is an in-memory key-value config store.
